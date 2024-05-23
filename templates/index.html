@@ -1,0 +1,472 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h1> Witaj użytkowniku </h1>
+<br><br>
+Znajdujesz się na stronie służącej do informowania o aktywności słonecznej. Informacje można pozyskać przeglądając obecną stronę lub zarejestrować się w celu otrzymywania najświeższych informacji na swojego maila!!!
+<br><br>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Tabelka -->
+    <title>Solar X-Ray Data</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Wykresy po kolei -->
+    <h1>Primary Solar X-Ray Data from GOES-16</h1>
+    <canvas id="primaryChart" width="400" height="400"></canvas>
+
+    <h1>Secondary Solar X-Ray Data from GOES-18</h1>
+    <canvas id="secondaryChart" width="400" height="400"></canvas>
+
+    <h1>Primary Proton Flux from GOES-18</h1>
+    <canvas id="primaryProtonChart" width="400" height="400"></canvas>
+
+    <h1>Secondary Proton Flux from GOES-16</h1>
+    <canvas id="secondaryProtonChart" width="400" height="400"></canvas>
+
+    <h1>Primary Electron Flux from GOES-16</h1>
+    <canvas id="primaryElectronChart" width="400" height="400"></canvas>
+
+    <h1>Secondary Electron Flux from GOES-18</h1>
+    <canvas id="secondaryElectronChart" width="400" height="400"></canvas>
+
+    <!-- WYkresy -->
+    <script>
+
+        // Pierwszy wykres primary flux
+        var primaryData = {
+            labels: {{ primary_data | map(attribute='time_tag') | list | tojson }},
+            datasets: [{
+                label: 'Primary Flux ',
+                data: {{ primary_data | map(attribute='flux') | list | tojson }},
+                backgroundColor: 'rgba(0, 123, 255, 0.5)',
+                borderColor: 'rgba(0, 123, 255, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        var primaryCtx = document.getElementById('primaryChart').getContext('2d');
+        var primaryChart = new Chart(primaryCtx, {
+            type: 'line',
+            data: primaryData,
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                        display: true,
+                        text: 'Time'  // Opis osi X
+                        }
+                    },
+                    y: {
+                        type: 'logarithmic',
+                        min: 1e-9, 
+                        max: 1e-2, 
+                        title: {
+                            display: true,
+                            text: 'Flux(Wats * m^-2)'
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                        // os y
+                                return value.toExponential(0);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                        // dane
+                                label += context.parsed.y.toExponential(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+
+
+
+
+        // Drugi wykres secondary flux
+        var secondaryData = {
+            labels: {{ secondary_data | map(attribute='time_tag') | list | tojson }},
+            datasets: [{
+                label: 'Secondary Flux ',
+                data: {{ secondary_data | map(attribute='flux') | list | tojson }},
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        var secondaryCtx = document.getElementById('secondaryChart').getContext('2d');
+        var secondaryChart = new Chart(secondaryCtx, {
+            type: 'line',
+            data: secondaryData,
+            options: {
+        scales: {
+                    x: {
+                        title: {
+                        display: true,
+                        text: 'Time'  // Opis osi X
+                        }
+                    },
+                    y: {
+                        type: 'logarithmic',
+                        min: 1e-9, 
+                        max: 1e-2, 
+                        title: {
+                            display: true,
+                            text: 'Flux(Wats * m^-2)'
+                        }, 
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value.toExponential(0);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y.toExponential(2);
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Trzeci wykres primary proton
+        var primaryProtonData = {
+            labels: {{ primary_proton_data | map(attribute='time_tag') | list | tojson }},
+            datasets: [{
+                label: 'Primary Proton Flux',
+                data: {{ primary_proton_data | map(attribute='flux') | list | tojson }},
+                backgroundColor: 'rgba(153, 102, 255, 0.5)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1,
+                energy: {{ primary_proton_data | map(attribute='energy') | list | tojson }}
+            }]
+        };
+
+        var primaryProtonCtx = document.getElementById('primaryProtonChart').getContext('2d');
+        var primaryProtonChart = new Chart(primaryProtonCtx, {
+            type: 'line',
+            data: primaryProtonData,
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                        display: true,
+                        text: 'Time'  // Opis osi X
+                        }
+                    },
+                    y: {
+                        type: 'logarithmic',
+                        min: 1e-2,
+                        max: 1e4, 
+                        title: {
+                            display: true,
+                            text: 'Flux (Particles * cm^-2 * s^-1 * sr-1)'
+                        }, 
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value.toExponential(0);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y.toExponential(2) + ' (' + context.dataset.energy[context.dataIndex] + ')';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+
+        //Czwarty wykres secondary proton
+        var secondaryProtonData = {
+            labels: {{ secondary_proton_data | map(attribute='time_tag') | list | tojson }},
+            datasets: [{
+                label: 'Secondary Proton Flux ',
+                data: {{ secondary_proton_data | map(attribute='flux') | list | tojson }},
+                backgroundColor: 'rgba(53, 102, 255, 0.5)',
+                borderColor: 'rgba(53, 102, 255, 1)',
+                borderWidth: 1,
+                energy: {{ secondary_proton_data | map(attribute='energy') | list | tojson }}
+            }]
+        };
+
+        var secondaryProtonCtx = document.getElementById('secondaryProtonChart').getContext('2d');
+        var secondaryProtonChart = new Chart(secondaryProtonCtx, {
+            type: 'line',
+            data: secondaryProtonData,
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                        display: true,
+                        text: 'Time'  // Opis osi X
+                        }
+                    },
+                    y: {
+                        type: 'logarithmic',
+                        min: 1e-2,
+                        max: 1e4, 
+                        title: {
+                            display: true,
+                            text: 'FluxX(Particles * cm^-2 * s^-1 * sr-1)'
+                        }, 
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value.toExponential(0);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y.toExponential(2) + ' (' + context.dataset.energy[context.dataIndex] + ')';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Piaty wykres primary electron
+        var primaryElectronData = {
+            labels: {{ primary_electron_data | map(attribute='time_tag') | list | tojson }},
+            datasets: [{
+                label: 'Primary Electron Flux ',
+                data: {{ primary_electron_data | map(attribute='flux') | list | tojson }},
+                backgroundColor: 'rgba(253, 12, 255, 0.5)',
+                borderColor: 'rgba(253, 12, 255, 1)',
+                borderWidth: 1,
+                energy: {{ primary_electron_data | map(attribute='energy') | list | tojson }}
+            }]
+        };
+
+        var primaryElectronCtx = document.getElementById('primaryElectronChart').getContext('2d');
+        var primaryElectronChart = new Chart(primaryElectronCtx, {
+            type: 'line',
+            data: primaryElectronData,
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                        display: true,
+                        text: 'Time'  // Opis osi X
+                        }
+                    },
+                    y: {
+                        type: 'logarithmic',
+                        min: 1e0,
+                        max: 1e7, 
+                        title: {
+                            display: true,
+                            text: 'Flux(Particles * cm^-2 * s^-1 * sr-1)'
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value.toExponential(0);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y.toExponential(2) + ' (' + context.dataset.energy[context.dataIndex] + ')';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Szosty wykres secondary electron
+        var secondaryElectronData = {
+            labels: {{ secondary_electron_data | map(attribute='time_tag') | list | tojson }},
+            datasets: [{
+                label: 'Secondary Electron Flux',
+                data: {{ secondary_electron_data | map(attribute='flux') | list | tojson }},
+                backgroundColor: 'rgba(3, 212, 255, 0.5)',
+                borderColor: 'rgba(3, 212, 255, 1)',
+                borderWidth: 1,
+                energy: {{ secondary_electron_data | map(attribute='energy') | list | tojson }}
+            }]
+        };
+
+        var secondaryElectronCtx = document.getElementById('secondaryElectronChart').getContext('2d');
+        var secondaryElectronChart = new Chart(secondaryElectronCtx, {
+            type: 'line',
+            data: secondaryElectronData,
+            options: {
+                scales: {
+                    x: {
+                        title: {
+                        display: true,
+                        text: 'Time' 
+                        }
+                    },
+                    y: {
+                        type: 'logarithmic',
+                        min: 1e0, 
+                        max: 1e7, 
+                        title: {
+                            display: true,
+                            text: 'Flux(Particles * cm^-2 * s^-1 * sr-1)'
+                        },
+                        ticks: {
+                            callback: function (value, index, values) {
+                                return value.toExponential(0);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                var label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+
+                                label += context.parsed.y.toExponential(2) + ' (' + context.dataset.energy[context.dataIndex] + ')';
+                                return label;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // Koniec wykresow - flara    tabelka
+    </script>
+<!-- Tabelka z danymi wybuchow i polezenie satelit-->
+<!-- -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <br/>
+    <h1>Solar Flare Data (dane o wybuchach słonecznych z ostatnich 7 dni)</h1>
+    <table>
+        <tr>
+            <!-- <th>Time Tag (data i czas)</th>-->
+            <th>Begin Time        (Data i czas rozpoczęcia wybuchu)</th>
+            <th>Begin Class (Klasa początkowa)</th>
+            <th>Max Time (Czas wystąpienia maksimum wybuchu)</th>
+            <th>Max Class (Maksymalna klasa)</th>
+            <!-- <th>Max XRLong</th> -->
+            <!-- <th>Max Ratio</th> -->
+            <!-- <th>Max Ratio Time</th> -->
+            <!-- <th>Current Int XRLong</th> -->
+            <th>End Time (Czas ukończenia zdarzenia)</th>
+            <th>End Class (Klasa końcowa)</th>
+            <th>Satellite (Satelita)</th>
+        </tr>
+        {% for flare in flare_data %}
+        <tr>
+            <!--<td>{{ flare.time_tag }}</td>-->
+            <td>{{ flare.begin_time }}</td>
+            <td>{{ flare.begin_class }}</td>
+            <td>{{ flare.max_time }}</td>
+            <td>{{ flare.max_class }}</td>
+            <!-- <td>{{ flare.max_xrlong }}</td> -->
+            <!-- <td>{{ flare.max_ratio }}</td> -->
+            <!-- <td>{{ flare.max_ratio_time }}</td> -->
+            <!-- <td>{{ flare.current_int_xrlong }}</td>-->
+            <td>{{ flare.end_time }}</td>
+            <td>{{ flare.end_class }}</td>
+            <td>{{ flare.satellite }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <br/>
+</body>
+</html>
+     <h1>Satellite logitudes (Dane o satelitach)</h1>
+     <table>
+        <tr>
+            <th>Satellite (Numer satelity) </th>
+            <th>Longitude (Długość geograficzna w stopniach) </th>
+        </tr>
+        {%for satellite in satellite_data%}
+        <tr>
+            <td>{{satellite.satellite}}</td>
+            <td>{{satellite.longitude}}</td>
+        </tr>
+        {%endfor%}
+     </table>
+</body>
+</html>
+
+{% endblock %}
